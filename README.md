@@ -24,7 +24,7 @@
 |Ctrl+MouseWheel|缩放字体。|
 >更多快捷按键在程序中。
 
-# 此编辑器不同于 Dev-C++ 的界面复杂，此编辑器使用 Tkinter 外壳，Windows API 优化界面布局，给你带来舒适的视觉体验和编程环境。
+### 此编辑器不同于 Dev-C++ 的界面复杂，此编辑器使用 Tkinter 外壳，Windows API 优化界面布局，给你带来舒适的视觉体验和编程环境。
 
 感谢使用本软件！
 http://www.yeskunkun.cn/
