@@ -26,14 +26,14 @@ window.showcomp = False
 window.showproblem = False
 window.appname = 'C++ Editor'
 window.namespace = 'cppeditor'
-window.version = '26.2.1'
+window.version = '26.3'
 windll.shell32.SetCurrentProcessExplicitAppUserModelID(window.namespace)
 window.gccdir = '{DefaultDirectory}'
 window.addcmd = '-static'
 window.compargv = ''
 window.title(window.appname)
 window.configure(bg='#171717' if isdark else '#F0F0F0')
-window.geometry('650x420')
+includesdir = [r'MinGW64']
 def log(message: str, level: str = 'INFO'):
     ts = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     line = f'[{ts}] {level}: {message}'
@@ -88,7 +88,6 @@ def load_config():
 
 # load persisted config at startup
 load_config()
-log(includesdir)
 class Scrollbar(tkScrollbar):
     def __init__(self,master,*args,**kwargs):
         super().__init__(master,*args,**kwargs)
@@ -196,7 +195,6 @@ vsbar.configure(command=views)
 vsbar.update()
 spaces = 0
 compiling = False
-includesdir = [r'MinGW64']
 # Precompile commonly used patterns for faster highlighting
 COMPILED_PATTERNS = [
     (_re.compile(r'#.*$', _re.MULTILINE), 'red'),
@@ -534,8 +532,7 @@ def compiles(self=None,filec=None,temp=False):
         else:
             log(f'Compilation succeeded, exe at {exe_path}', 'INFO')
             # show warnings (non-blocking) in pane if present
-            if entries:
-                show_error_pane(entries)
+            show_error_pane(entries)
     else:
         if issavefile() in [-1,0]:
             return -1
@@ -763,7 +760,7 @@ error_pane.visible = False
 error_pane.header = Frame(error_pane, bg='#171717')
 error_pane.title = Label(error_pane.header, text='编译结果', bg='#171717', fg='#FFFFFF', font=('Microsoft Yahei UI',11))
 error_pane.title.pack(side='left', padx=6)
-error_pane.closebtn = Button(error_pane.header, text='关闭(ESC)', command=lambda: hide_error_pane(), bd=0, font=('Microsoft Yahei UI',11))
+error_pane.closebtn = Button(error_pane.header, text='关闭', command=lambda:hide_error_pane(), bd=0, font=('Microsoft Yahei UI',11))
 error_pane.closebtn.pack(side='right', padx=6)
 error_pane.header.pack(fill='x')
 error_pane.text = Text(error_pane, height=6, bg='#2D2D2D', fg='#FFFFFF', bd=0, highlightthickness=0, wrap='word',font=(text.font['family'],10))
@@ -780,6 +777,11 @@ def show_error_pane(entries):
         # populate text widget with colored tags per line
         error_pane.text.configure(state='normal')
         error_pane.text.delete('1.0', 'end')
+        log(f'Show error pane: {entries}')
+        if not entries:
+            error_pane.visible = False
+            error_pane.pack_forget()
+            return
         for typ, line in entries:
             tag = 'error' if typ == 'error' else 'warning'
             error_pane.text.insert('end', line + '\n', tag)
@@ -815,6 +817,7 @@ def hide_error_pane():
         try:
             # remove Escape binding if present
             window.unbind('<Escape>')
+            text.focus_set()
         except Exception:
             pass
         updatepack()
@@ -1100,20 +1103,8 @@ hook_proc = WINFUNCTYPE(wintypes.LPARAM,c_int,wintypes.WPARAM,wintypes.LPARAM)(h
 def show_help(self=None):
     h_hook = windll.user32.SetWindowsHookExW(5,hook_proc,None,windll.kernel32.GetCurrentThreadId())
     if windll.user32.MessageBoxExW(window.winfo_id(),f'''{window.appname} v{window.version}。
-野生坤坤没头像制作。
-THIS SOFTWARE BELONGS TO YESOFTWARE.
-http://www.yeskunkun.cn/
-一个追求界面极致精简的编辑器，适合日常刷题和写写小项目。
-没有任何诋毁其它编辑器的意思。如果有建议可以视频下留言或私信我。
-
-鸣谢名单：
-bilibili@bzimage - 让我给编辑器起名字。
-bilibili@羊行古、bilibili@矢与珏 - 增加 GCC 参数设置入口。
-
-最新更新：
-增加头文件判断功能、参数设置入口。
-计划更新：
-OJ功能增加 Markdown支持。''',f'关于',65,0x00000904) == 1:
+Windows 上运行的 C++ 编辑器！
+野生坤坤没头像制作。''',f'关于',65,0x00000904) == 1:
         startfile('http://www.yeskunkun.cn/')
     windll.user32.UnhookWindowsHookEx(h_hook)
 def downloadgcc(self=None):
@@ -1296,6 +1287,7 @@ def highlight(self=None):
 
         for m in INCLUDE_RE.finditer(visible):
             incname = m.group(1) or m.group(2)
+            incname = incname[incname.rfind('/')+1:]
             if not incname:
                 continue
             start = f'{vis_start}+{m.start()}c'
@@ -1672,7 +1664,6 @@ windll.user32.SetWindowLongPtrW(windll.user32.GetParent(window.winfo_id()),-20,6
 menubar.update()
 menubar.bind('<B1-Motion>',lambda _:windll.user32.ReleaseCapture(),windll.user32.SendMessageW(windll.user32.GetParent(window.winfo_id()),274,61458,0))
 window.protocol('WM_DELETE_WINDOW',exits)
-window.withdraw()
 if len(argv) >= 2:
     if exists(argv[1]):
         try:
@@ -1687,6 +1678,7 @@ if len(argv) >= 2:
         windll.user32.MessageBoxW(0,f'文件无法打开。文件未找到。',window.title(),16)
     highlight()
     updatescroll()
+window.geometry('650x420')
 window.deiconify()
 window.focus_force()
 text.focus_set()
